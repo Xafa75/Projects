@@ -1,28 +1,35 @@
 #O código a seguir é o consumo de uma API púbica (datajud) que disponibiliza metadados sobre processos em cada estado, transformando-os em um Dataframe
 #e salvando-os em um arquivo csv.
 
+
+
+#https://www.tjsp.jus.br/Download/GeraisIntranet/SPI/AreaCriminal.pdf  
+
 import requests
 import json
 import re
 import time
 import pandas as pd
 
+
 api_key = "ApiKey cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw=="
 url = "https://api-publica.datajud.cnj.jus.br/api_publica_tjrj/_search"
 headers = {'Authorization': api_key,
            'Content-Type': 'application/json'}
 listaProcessos = []
+
 def envio(sort):
     while True:
         try:
             payload = json.dumps({
-            "size":5000,
-            "query":{"match" : {"assuntos.codigo": 3431}},
+            "size":2000,
+            "query":{"match" : {"assuntos.codigo": 3419}},
             "sort":[{"dataAjuizamento":{ "order" : "asc" }}],
             "search_after": [ sort ]
             })
             response = requests.request("POST",url,headers=headers, data=payload,timeout=20)
-        except requests.exceptions.ReadTimeout:
+            print(response.json()['hits']['hits'])
+        except (requests.exceptions.ReadTimeout,IndexError):
             df = pd.DataFrame(listaProcessos, columns=('numeroProcesso','classe','orgao','strData', 'ultimaAtualizacao','formato','assuntos','sort'))
             df.to_csv('processosRJ.csv')
             print(df)
@@ -44,4 +51,3 @@ def envio(sort):
                 listaProcessos.append([numeroProcesso,classe,orgao,strData, ultimaAtualizacao,formato,assuntos,sort])
     return listaProcessos
 envio(sort = 0)
-
